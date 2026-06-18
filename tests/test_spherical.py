@@ -6,10 +6,12 @@ from ffprime.electrostatics.spherical import (
     quadrupole_cartesian_to_spherical,
     quadrupole_spherical_to_cartesian,
 )
-"""from ffprime.electrostatics.multipole import dipole_potential
-from ffprime.electrostatics.spherical import spherical_dipole_potential"""
+from ffprime.electrostatics.multipole import dipole_potential
+from ffprime.electrostatics.spherical import spherical_dipole_potential
+from ffprime.electrostatics.multipole import quadrupole_potential
+from ffprime.electrostatics.spherical import spherical_quadrupole_potential
 
-"""def test_spherical_dipole_matches_cartesian():
+def test_spherical_dipole_matches_cartesian():
     q = np.array([1.0, 2.0, 3.0])
 
     cart = dipole_spherical_to_cartesian(q)
@@ -29,7 +31,7 @@ from ffprime.electrostatics.spherical import spherical_dipole_potential"""
         points,
     )
 
-    assert np.allclose(v_cart, v_sph)"""
+    assert np.allclose(v_cart, v_sph)
 
 def test_dipole_z_aligned():
     """Pure z-dipole maps entirely to Q_10, others zero."""
@@ -78,3 +80,24 @@ def test_quadrupole_roundtrip():
         quadrupole_cartesian_to_spherical(theta)
     )
     assert np.allclose(recovered, theta)
+def test_spherical_quadrupole_matches_cartesian():
+    q = np.array([1.0, 0.3, -0.2, 0.4, 0.1])
+
+    theta = quadrupole_spherical_to_cartesian(q)
+
+    coords = np.array([[0.0, 0.0, 0.0]])
+    points = np.array([[1.0, 2.0, 3.0]])
+
+    v_cart = quadrupole_potential(
+        np.array([theta]),
+        coords,
+        points,
+    )
+
+    v_sph = spherical_quadrupole_potential(
+        np.array([q]),
+        coords,
+        points,
+    )
+
+    assert np.allclose(v_cart, v_sph)

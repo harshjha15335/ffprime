@@ -17,11 +17,7 @@ def dipole_spherical_to_cartesian(q: np.ndarray) -> np.ndarray:
     return np.array([Q_11c, Q_11s, Q_10])
 
 
-def spherical_dipole_potential(
-    dipoles: np.ndarray,
-    coords: np.ndarray,
-    points: np.ndarray,
-) -> np.ndarray:
+def spherical_dipole_potential(dipoles, coords, points):
     """
     Compute electrostatic potential directly from spherical dipole moments.
 
@@ -30,16 +26,52 @@ def spherical_dipole_potential(
     dipoles : np.ndarray, shape (N, 3)
         Spherical dipole components [Q_10, Q_11c, Q_11s].
     coords : np.ndarray, shape (N, 3)
-        Atomic coordinates.
     points : np.ndarray, shape (M, 3)
-        Evaluation points.
 
     Returns
     -------
-    np.ndarray, shape (M,)
-        Electrostatic potential.
+    potential : np.ndarray, shape (M,)
     """
     dipoles = np.asarray(dipoles)
+    coords = np.asarray(coords)
+    points = np.asarray(points)
+
+    r_vecs = points[:, np.newaxis, :] - coords[np.newaxis, :, :]
+    r = np.linalg.norm(r_vecs, axis=-1)
+    safe_r = np.where(r < 1e-12, np.inf, r)
+
+    x = r_vecs[:, :, 0]
+    y = r_vecs[:, :, 1]
+    z = r_vecs[:, :, 2]
+
+    Q10 = dipoles[:, 0]
+    Q11c = dipoles[:, 1]
+    Q11s = dipoles[:, 2]
+
+    p_dot_r = (
+        Q11c[np.newaxis, :] * x
+        + Q11s[np.newaxis, :] * y
+        + Q10[np.newaxis, :] * z
+    )
+
+    return np.sum(p_dot_r / safe_r**3, axis=1)
+def spherical_quadrupole_potential(quadrupoles, coords, points):
+    """
+    Compute electrostatic potential directly from spherical quadrupole moments.
+
+    Parameters
+    ----------
+    quadrupoles : np.ndarray, shape (N, 5)
+        Spherical quadrupole components
+        [Q_20, Q_21c, Q_21s, Q_22c, Q_22s].
+    coords : np.ndarray, shape (N, 3)
+    points : np.ndarray, shape (M, 3)
+
+    Returns
+    -------
+    potential : np.ndarray, shape (M,)
+    """
+    quadrupoles = np.asarray(quadrupoles)
     coords = np.asarray(coords)
     points = np.asarray(points)
 
@@ -52,18 +84,21 @@ def spherical_dipole_potential(
     r = np.linalg.norm(r_vecs, axis=-1)
     safe_r = np.where(r < 1e-12, np.inf, r)
 
-    Q10 = dipoles[:, 0]
-    Q11c = dipoles[:, 1]
-    Q11s = dipoles[:, 2]
+    Q20 = quadrupoles[:, 0]
+    Q21c = quadrupoles[:, 1]
+    Q21s = quadrupoles[:, 2]
+    Q22c = quadrupoles[:, 3]
+    Q22s = quadrupoles[:, 4]
 
     numerator = (
-        Q11c[np.newaxis, :] * x
-        + Q11s[np.newaxis, :] * y
-        + Q10[np.newaxis, :] * z
+        Q20[np.newaxis, :] * (z**2 - 0.5 * (x**2 + y**2))
+        + Q22c[np.newaxis, :] * (x**2 - y**2)
+        + 2.0 * Q22s[np.newaxis, :] * x * y
+        + 2.0 * Q21c[np.newaxis, :] * x * z
+        + 2.0 * Q21s[np.newaxis, :] * y * z
     )
 
-    return np.sum(numerator / safe_r**3, axis=1)
-
+    return np.sum(numerator / safe_r**5, axis=1)
 
 def quadrupole_cartesian_to_spherical(theta: np.ndarray) -> np.ndarray:
     """
