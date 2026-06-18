@@ -6,7 +6,30 @@ from ffprime.electrostatics.spherical import (
     quadrupole_cartesian_to_spherical,
     quadrupole_spherical_to_cartesian,
 )
+"""from ffprime.electrostatics.multipole import dipole_potential
+from ffprime.electrostatics.spherical import spherical_dipole_potential"""
 
+"""def test_spherical_dipole_matches_cartesian():
+    q = np.array([1.0, 2.0, 3.0])
+
+    cart = dipole_spherical_to_cartesian(q)
+
+    coords = np.array([[0.0, 0.0, 0.0]])
+    points = np.array([[1.0, 2.0, 3.0]])
+
+    v_cart = dipole_potential(
+        np.array([cart]),
+        coords,
+        points,
+    )
+
+    v_sph = spherical_dipole_potential(
+        np.array([q]),
+        coords,
+        points,
+    )
+
+    assert np.allclose(v_cart, v_sph)"""
 
 def test_dipole_z_aligned():
     """Pure z-dipole maps entirely to Q_10, others zero."""
