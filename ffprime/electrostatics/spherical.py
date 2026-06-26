@@ -28,6 +28,8 @@ Oxford University Press.
 """
 import numpy as np
 
+from ffprime.electrostatics.multipole import quadrupole_field
+
 
 def _validate_shapes(coords, points):
     """Validate coordinate and point array shapes."""
@@ -135,7 +137,106 @@ def spherical_dipole_potential(dipoles, coords, points):
     return np.sum(p_dot_r / safe_r**3, axis=1)
 
 
+def spherical_monopole_field(charges, coords, points):
+    """
+    Compute electric field directly from point charges.
+
+    Parameters
+    ----------
+    charges : np.ndarray, shape (N,)
+        Point charges in atomic units.
+    coords : np.ndarray, shape (N, 3)
+    points : np.ndarray, shape (M, 3)
+
+    Returns
+    -------
+    field : np.ndarray, shape (M, 3)
+    """
+    charges = np.asarray(charges)
+    coords = np.asarray(coords)
+    points = np.asarray(points)
+
+    _validate_shapes(coords, points)
+
+    if len(charges) != len(coords):
+        raise ValueError("charges and coords must have same length")
+
+    if charges.ndim != 1:
+        raise ValueError(
+            f"charges must have shape (N,), got {charges.shape}"
+        )
+
+    r_vecs = points[:, np.newaxis, :] - coords[np.newaxis, :, :]
+    r = np.linalg.norm(r_vecs, axis=-1)
+    safe_r = np.where(r < 1e-12, np.inf, r)
+
+    field = charges[np.newaxis, :, np.newaxis] * r_vecs / safe_r[:, :, np.newaxis] ** 3
+    return np.sum(field, axis=1)
+
+
+def spherical_dipole_field(dipoles, coords, points):
+    """
+    Compute electric field directly from spherical dipole moments.
+
+    Parameters
+    ----------
+    dipoles : np.ndarray, shape (N, 3)
+        Spherical dipole components [Q_10, Q_11c, Q_11s].
+    coords : np.ndarray, shape (N, 3)
+    points : np.ndarray, shape (M, 3)
+
+    Returns
+    -------
+    field : np.ndarray, shape (M, 3)
+    """
+    dipoles = np.asarray(dipoles)
+    coords = np.asarray(coords)
+    points = np.asarray(points)
+
+    _validate_shapes(coords, points)
+
+    if len(dipoles) != len(coords):
+        raise ValueError("dipoles and coords must have same length")
+
+    if dipoles.ndim != 2 or dipoles.shape[1] != 3:
+        raise ValueError(
+            f"dipoles must have shape (N, 3), got {dipoles.shape}"
+        )
+
+    r_vecs = points[:, np.newaxis, :] - coords[np.newaxis, :, :]
+    r = np.linalg.norm(r_vecs, axis=-1)
+    safe_r = np.where(r < 1e-12, np.inf, r)
+    r_hat = r_vecs / safe_r[:, :, np.newaxis]
+
+    Q10 = dipoles[:, 0]
+    Q11c = dipoles[:, 1]
+    Q11s = dipoles[:, 2]
+
+    # Reconstruct p.r_hat using spherical components:
+    # p = (Q11c, Q11s, Q10) in Cartesian, so p.r_hat = Q11c*rx + Q11s*ry + Q10*rz
+    rx = r_hat[:, :, 0]
+    ry = r_hat[:, :, 1]
+    rz = r_hat[:, :, 2]
+
+    p_dot_rhat = (
+        Q11c[np.newaxis, :] * rx
+        + Q11s[np.newaxis, :] * ry
+        + Q10[np.newaxis, :] * rz
+    )
+
+    # p vector broadcast to (M, N, 3)
+    p = np.stack([
+        Q11c[np.newaxis, :] * np.ones_like(rx),
+        Q11s[np.newaxis, :] * np.ones_like(rx),
+        Q10[np.newaxis, :] * np.ones_like(rx),
+    ], axis=-1)
+
+    term = (3 * p_dot_rhat[:, :, np.newaxis] * r_hat - p)
+    return np.sum(term / safe_r[:, :, np.newaxis] ** 3, axis=1)
+
+
 def spherical_quadrupole_potential(quadrupoles, coords, points):
+
     """
     Compute electrostatic potential directly from spherical quadrupole moments.
 
@@ -189,6 +290,56 @@ def spherical_quadrupole_potential(quadrupoles, coords, points):
     )
 
     return np.sum(numerator / safe_r**5, axis=1)
+
+
+def spherical_quadrupole_field(quadrupoles, coords, points):
+    """
+    Compute electric field directly from spherical quadrupole moments.
+
+    Reuses the same infrastructure as ``spherical_quadrupole_potential``:
+    the spherical components are converted back to a Cartesian traceless
+    quadrupole tensor via ``quadrupole_spherical_to_cartesian``, and the
+    field is then evaluated using the existing Cartesian
+    ``quadrupole_field`` routine (E = -grad V).
+
+    Parameters
+    ----------
+    quadrupoles : np.ndarray, shape (N, 5)
+        Spherical quadrupole components
+        [Q_20, Q_21c, Q_21s, Q_22c, Q_22s].
+    coords : np.ndarray, shape (N, 3)
+    points : np.ndarray, shape (M, 3)
+
+    Returns
+    -------
+    field : np.ndarray, shape (M, 3)
+    """
+    quadrupoles = np.asarray(quadrupoles)
+    coords = np.asarray(coords)
+    points = np.asarray(points)
+
+    _validate_shapes(coords, points)
+
+    if len(quadrupoles) != len(coords):
+        raise ValueError("quadrupoles and coords must have same length")
+
+    if quadrupoles.ndim != 2 or quadrupoles.shape[1] != 5:
+        raise ValueError(
+            f"quadrupoles must have shape (N, 5), got {quadrupoles.shape}"
+        )
+
+    cartesian = np.array(
+        [
+            quadrupole_spherical_to_cartesian(q)
+            for q in quadrupoles
+        ]
+    )
+
+    return quadrupole_field(
+        cartesian,
+        coords,
+        points,
+    )
 
 
 def quadrupole_cartesian_to_spherical(theta: np.ndarray) -> np.ndarray:
