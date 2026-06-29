@@ -1,5 +1,13 @@
+"""
+NOTE: imports of Cartesian helpers below moved from
+``ffprime.electrostatics.multipole`` to ``ffprime.electrostatics.cartesian``
+as part of the Cartesian/spherical architecture split. Test bodies and
+assertions are unchanged.
+"""
+
 import numpy as np
 import pytest
+
 from ffprime.electrostatics.spherical import (
     dipole_cartesian_to_spherical,
     dipole_spherical_to_cartesian,
@@ -7,11 +15,14 @@ from ffprime.electrostatics.spherical import (
     quadrupole_spherical_to_cartesian,
     spherical_monopole_field,
     spherical_dipole_field,
+    spherical_total_potential,
+    spherical_total_field,
 )
-from ffprime.electrostatics.multipole import monopole_field
-from ffprime.electrostatics.multipole import dipole_potential, dipole_field
+from ffprime.electrostatics.cartesian import monopole_field
+from ffprime.electrostatics.cartesian import monopole_potential
+from ffprime.electrostatics.cartesian import dipole_potential, dipole_field
 from ffprime.electrostatics.spherical import spherical_dipole_potential
-from ffprime.electrostatics.multipole import quadrupole_potential, quadrupole_field
+from ffprime.electrostatics.cartesian import quadrupole_potential, quadrupole_field
 from ffprime.electrostatics.spherical import (
     spherical_quadrupole_potential,
     spherical_quadrupole_field,
@@ -24,7 +35,6 @@ from ffprime.electrostatics.spherical import (
 
 def test_spherical_monopole_field_matches_cartesian():
     charges = np.array([1.0])
-
     coords = np.array([[0.0, 0.0, 0.0]])
     points = np.array([[1.0, 2.0, 3.0]])
 
@@ -33,7 +43,6 @@ def test_spherical_monopole_field_matches_cartesian():
         coords,
         points,
     )
-
     e_sph = spherical_monopole_field(
         charges,
         coords,
@@ -47,12 +56,9 @@ def test_monopole_field_along_x():
     """
     Unit charge at origin, point at (2, 0, 0).
 
-    E = q * r / r³
-      = 1 * (2, 0, 0) / 8
-      = (0.25, 0, 0)
+    E = q * r / r³ = 1 * (2, 0, 0) / 8 = (0.25, 0, 0)
     """
     charges = np.array([1.0])
-
     coords = np.array([[0.0, 0.0, 0.0]])
     points = np.array([[2.0, 0.0, 0.0]])
 
@@ -73,6 +79,7 @@ def test_dipole_z_aligned():
     """Pure z-dipole maps entirely to Q_10, others zero."""
     p = np.array([0.0, 0.0, 1.0])
     sph = dipole_cartesian_to_spherical(p)
+
     assert np.isclose(sph[0], 1.0)
     assert np.isclose(sph[1], 0.0)
     assert np.isclose(sph[2], 0.0)
@@ -88,7 +95,6 @@ def test_dipole_roundtrip():
 
 def test_dipole_potential_consistency():
     q = np.array([1.0, 2.0, 3.0])
-
     cart = dipole_spherical_to_cartesian(q)
 
     coords = np.array([[0.0, 0.0, 0.0]])
@@ -99,7 +105,6 @@ def test_dipole_potential_consistency():
         coords,
         points,
     )
-
     v_sph = spherical_dipole_potential(
         np.array([q]),
         coords,
@@ -114,13 +119,9 @@ def test_dipole_potential_along_z():
     Pure Q10 dipole evaluated on the z-axis.
 
     Q10 = 1, r = (0, 0, 2)
-
-    V = z / r³
-      = 2 / 8
-      = 0.25
+    V = z / r³ = 2 / 8 = 0.25
     """
     dipoles = np.array([[1.0, 0.0, 0.0]])
-
     coords = np.array([[0.0, 0.0, 0.0]])
     points = np.array([[0.0, 0.0, 2.0]])
 
@@ -135,7 +136,6 @@ def test_dipole_potential_along_z():
 
 def test_spherical_dipole_field_matches_cartesian():
     q = np.array([1.0, 2.0, 3.0])
-
     cart = dipole_spherical_to_cartesian(q)
 
     coords = np.array([[0.0, 0.0, 0.0]])
@@ -146,7 +146,6 @@ def test_spherical_dipole_field_matches_cartesian():
         coords,
         points,
     )
-
     e_sph = spherical_dipole_field(
         np.array([q]),
         coords,
@@ -161,13 +160,9 @@ def test_dipole_field_along_z():
     Pure Q10 dipole evaluated on the z-axis.
 
     Q10 = 1, r = (0, 0, 2)
-
-    E = [3(p.r̂)r̂ - p] / r³
-      = [3*(0,0,1) - (0,0,1)] / 8
-      = (0, 0, 0.25)
+    E = [3(p.r̂)r̂ - p] / r³ = [3*(0,0,1) - (0,0,1)] / 8 = (0, 0, 0.25)
     """
     dipoles = np.array([[1.0, 0.0, 0.0]])
-
     coords = np.array([[0.0, 0.0, 0.0]])
     points = np.array([[0.0, 0.0, 2.0]])
 
@@ -194,11 +189,12 @@ def test_quadrupole_traceless_check():
 def test_quadrupole_z_axial():
     """Axially symmetric quadrupole along z has only Q_20 nonzero."""
     theta = np.array([
-        [-0.5,  0.0,  0.0],
-        [ 0.0, -0.5,  0.0],
-        [ 0.0,  0.0,  1.0]
+        [-0.5, 0.0, 0.0],
+        [0.0, -0.5, 0.0],
+        [0.0, 0.0, 1.0]
     ])
     sph = quadrupole_cartesian_to_spherical(theta)
+
     assert np.isclose(sph[0], 1.0)
     assert np.allclose(sph[1:], 0.0)
 
@@ -206,19 +202,19 @@ def test_quadrupole_z_axial():
 def test_quadrupole_roundtrip():
     """Cartesian -> spherical -> Cartesian recovers original tensor."""
     theta = np.array([
-        [-0.5,  0.3,  0.1],
-        [ 0.3, -0.5,  0.2],
-        [ 0.1,  0.2,  1.0]
+        [-0.5, 0.3, 0.1],
+        [0.3, -0.5, 0.2],
+        [0.1, 0.2, 1.0]
     ])
     recovered = quadrupole_spherical_to_cartesian(
         quadrupole_cartesian_to_spherical(theta)
     )
+
     assert np.allclose(recovered, theta)
 
 
 def test_quadrupole_potential_consistency():
     q = np.array([1.0, 0.3, -0.2, 0.4, 0.1])
-
     theta = quadrupole_spherical_to_cartesian(q)
 
     coords = np.array([[0.0, 0.0, 0.0]])
@@ -229,7 +225,6 @@ def test_quadrupole_potential_consistency():
         coords,
         points,
     )
-
     v_sph = spherical_quadrupole_potential(
         np.array([q]),
         coords,
@@ -244,13 +239,9 @@ def test_quadrupole_potential_along_z():
     Pure Q20 quadrupole evaluated on the z-axis.
 
     Q20 = 1, r = (0, 0, 2)
-
-    V = (z² - 0.5(x² + y²)) / r⁵
-      = 4 / 32
-      = 0.125
+    V = (z² - 0.5(x² + y²)) / r⁵ = 4 / 32 = 0.125
     """
     quadrupoles = np.array([[1.0, 0.0, 0.0, 0.0, 0.0]])
-
     coords = np.array([[0.0, 0.0, 0.0]])
     points = np.array([[0.0, 0.0, 2.0]])
 
@@ -265,7 +256,6 @@ def test_quadrupole_potential_along_z():
 
 def test_spherical_quadrupole_field_matches_cartesian():
     q = np.array([1.0, 0.3, -0.2, 0.4, 0.1])
-
     theta = quadrupole_spherical_to_cartesian(q)
 
     coords = np.array([[0.0, 0.0, 0.0]])
@@ -276,7 +266,6 @@ def test_spherical_quadrupole_field_matches_cartesian():
         coords,
         points,
     )
-
     e_sph = spherical_quadrupole_field(
         np.array([q]),
         coords,
@@ -300,7 +289,6 @@ def test_quadrupole_field_along_z():
     against spherical_quadrupole_field's result.
     """
     quadrupoles = np.array([[1.0, 0.0, 0.0, 0.0, 0.0]])
-
     coords = np.array([[0.0, 0.0, 0.0]])
     points = np.array([[0.0, 0.0, 2.0]])
 
@@ -325,3 +313,99 @@ def test_quadrupole_field_along_z():
 
     assert np.allclose(result, expected)
     assert np.allclose(result, [[0.0, 0.0, 0.25]])
+
+
+# ---------------------------------------------------------------------------
+# Total potential / field (superposition of all multipole orders)
+# ---------------------------------------------------------------------------
+
+def test_spherical_total_potential_monopole_only():
+    charges = np.array([1.0])
+
+    coords = np.array([[0.0, 0.0, 0.0]])
+    points = np.array([[1.0, 0.0, 0.0]])
+
+    expected = monopole_potential(
+        charges,
+        coords,
+        points,
+    )
+
+    result = spherical_total_potential(
+        coords,
+        points,
+        charges=charges,
+    )
+
+    assert np.allclose(result, expected)
+
+
+def test_spherical_total_potential_superposition():
+    charges = np.array([1.0])
+    dipoles = np.array([[1.0, 0.0, 0.0]])
+    quadrupoles = np.array([[1.0, 0.0, 0.0, 0.0, 0.0]])
+
+    coords = np.array([[0.0, 0.0, 0.0]])
+    points = np.array([[1.0, 2.0, 3.0]])
+
+    expected = (
+        monopole_potential(charges, coords, points)
+        + spherical_dipole_potential(dipoles, coords, points)
+        + spherical_quadrupole_potential(quadrupoles, coords, points)
+    )
+
+    result = spherical_total_potential(
+        coords,
+        points,
+        charges=charges,
+        dipoles=dipoles,
+        quadrupoles=quadrupoles,
+    )
+
+    assert np.allclose(result, expected)
+
+
+def test_spherical_total_field_monopole_only():
+    charges = np.array([1.0])
+
+    coords = np.array([[0.0, 0.0, 0.0]])
+    points = np.array([[1.0, 0.0, 0.0]])
+
+    expected = monopole_field(
+        charges,
+        coords,
+        points,
+    )
+
+    result = spherical_total_field(
+        coords,
+        points,
+        charges=charges,
+    )
+
+    assert np.allclose(result, expected)
+
+
+def test_spherical_total_field_superposition():
+    charges = np.array([1.0])
+    dipoles = np.array([[1.0, 0.0, 0.0]])
+    quadrupoles = np.array([[1.0, 0.0, 0.0, 0.0, 0.0]])
+
+    coords = np.array([[0.0, 0.0, 0.0]])
+    points = np.array([[1.0, 2.0, 3.0]])
+
+    expected = (
+        spherical_monopole_field(charges, coords, points)
+        + spherical_dipole_field(dipoles, coords, points)
+        + spherical_quadrupole_field(quadrupoles, coords, points)
+    )
+
+    result = spherical_total_field(
+        coords,
+        points,
+        charges=charges,
+        dipoles=dipoles,
+        quadrupoles=quadrupoles,
+    )
+
+    assert np.allclose(result, expected)
