@@ -22,16 +22,19 @@ import numpy as np
 from ffprime.electrostatics.utils import compute_displacement, validate_shapes
 
 
-def monopole_potential(charges, coords, points):
+def monopole_potential(atcharges, atcoords, points):
     """
     Compute electrostatic potential from atomic monopoles (charges).
-    V(r) = sum_i q_i / |r - r_i|
+
+    .. math::
+
+        V(\\mathbf{r}) = \\sum_i \\frac{q_i}{|\\mathbf{r} - \\mathbf{r}_i|}
 
     Parameters
     ----------
-    charges : np.ndarray, shape (N,)
+    atcharges : np.ndarray, shape (N,)
         Atomic charges in atomic units.
-    coords : np.ndarray, shape (N, 3)
+    atcoords : np.ndarray, shape (N, 3)
         Atomic coordinates in atomic units.
     points : np.ndarray, shape (M, 3)
         Field points at which to evaluate the potential.
@@ -41,111 +44,132 @@ def monopole_potential(charges, coords, points):
     potential : np.ndarray, shape (M,)
         Electrostatic potential at each field point in atomic units.
     """
-    charges = np.asarray(charges)
-    coords = np.asarray(coords)
+    atcharges = np.asarray(atcharges)
+    atcoords = np.asarray(atcoords)
     points = np.asarray(points)
-    validate_shapes(coords, points)
+    validate_shapes(atcoords, points)
 
-    if len(charges) != len(coords):
-        raise ValueError("charges and coords must have same length")
+    if len(atcharges) != len(atcoords):
+        raise ValueError("atcharges and atcoords must have same length")
 
-    _, _, safe_r = compute_displacement(coords, points)
-    return np.sum(charges[np.newaxis, :] / safe_r, axis=1)
+    _, _, safe_r = compute_displacement(atcoords, points)
+    return np.sum(atcharges[np.newaxis, :] / safe_r, axis=1)
 
 
-def monopole_field(charges, coords, points):
+def monopole_field(atcharges, atcoords, points):
     """
     Compute electric field from atomic monopoles (charges).
-    E(r) = sum_i q_i (r - r_i) / |r - r_i|^3
+
+    .. math::
+
+        \\mathbf{E}(\\mathbf{r}) =
+        \\sum_i q_i \\frac{\\mathbf{r} - \\mathbf{r}_i}{|\\mathbf{r} - \\mathbf{r}_i|^3}
 
     Parameters
     ----------
-    charges : np.ndarray, shape (N,)
-    coords : np.ndarray, shape (N, 3)
+    atcharges : np.ndarray, shape (N,)
+        Atomic charges in atomic units.
+    atcoords : np.ndarray, shape (N, 3)
+        Atomic coordinates in atomic units.
     points : np.ndarray, shape (M, 3)
+        Field points at which to evaluate the field.
 
     Returns
     -------
     field : np.ndarray, shape (M, 3)
+        Electric field at each field point in atomic units.
     """
-    charges = np.asarray(charges)
-    coords = np.asarray(coords)
+    atcharges = np.asarray(atcharges)
+    atcoords = np.asarray(atcoords)
     points = np.asarray(points)
-    validate_shapes(coords, points)
+    validate_shapes(atcoords, points)
 
-    if len(charges) != len(coords):
-        raise ValueError("charges and coords must have same length")
+    if len(atcharges) != len(atcoords):
+        raise ValueError("atcharges and atcoords must have same length")
 
-    r_vecs, _, safe_r = compute_displacement(coords, points)
-    field = charges[np.newaxis, :, np.newaxis] * r_vecs / safe_r[:, :, np.newaxis] ** 3
+    r_vecs, _, safe_r = compute_displacement(atcoords, points)
+    field = atcharges[np.newaxis, :, np.newaxis] * r_vecs / safe_r[:, :, np.newaxis] ** 3
     return np.sum(field, axis=1)
 
 
-def dipole_potential(dipoles, coords, points):
+def dipole_potential(dipoles, atcoords, points):
     """
     Compute electrostatic potential from atomic dipoles.
 
-    V(r) = sum_i [ p_i . (r - r_i) ] / |r - r_i|^3
+    .. math::
+
+        V(\\mathbf{r}) =
+        \\sum_i \\frac{\\mathbf{p}_i \\cdot (\\mathbf{r} - \\mathbf{r}_i)}{|\\mathbf{r} - \\mathbf{r}_i|^3}
 
     Parameters
     ----------
     dipoles : np.ndarray, shape (N, 3)
         Atomic dipole moment vectors in atomic units.
-    coords : np.ndarray, shape (N, 3)
+    atcoords : np.ndarray, shape (N, 3)
+        Atomic coordinates in atomic units.
     points : np.ndarray, shape (M, 3)
+        Field points at which to evaluate the potential.
 
     Returns
     -------
     potential : np.ndarray, shape (M,)
+        Electrostatic potential at each field point in atomic units.
     """
     dipoles = np.asarray(dipoles)
-    coords = np.asarray(coords)
+    atcoords = np.asarray(atcoords)
     points = np.asarray(points)
-    validate_shapes(coords, points)
+    validate_shapes(atcoords, points)
 
-    if len(dipoles) != len(coords):
-        raise ValueError("dipoles and coords must have same length")
+    if len(dipoles) != len(atcoords):
+        raise ValueError("dipoles and atcoords must have same length")
 
     if dipoles.ndim != 2 or dipoles.shape[1] != 3:
         raise ValueError(
             f"dipoles must have shape (N, 3), got {dipoles.shape}"
         )
 
-    r_vecs, _, safe_r = compute_displacement(coords, points)
+    r_vecs, _, safe_r = compute_displacement(atcoords, points)
     p_dot_r = np.einsum("ij,mij->mi", dipoles, r_vecs)
     return np.sum(p_dot_r / safe_r ** 3, axis=1)
 
 
-def dipole_field(dipoles, coords, points):
+def dipole_field(dipoles, atcoords, points):
     """
     Compute electric field from atomic dipoles.
 
-    E(r) = sum_i [ 3(p_i . r̂)r̂ - p_i ] / |r - r_i|^3
+    .. math::
+
+        \\mathbf{E}(\\mathbf{r}) =
+        \\sum_i \\frac{3(\\mathbf{p}_i \\cdot \\hat{\\mathbf{r}})\\hat{\\mathbf{r}} - \\mathbf{p}_i}{|\\mathbf{r} - \\mathbf{r}_i|^3}
 
     Parameters
     ----------
     dipoles : np.ndarray, shape (N, 3)
-    coords : np.ndarray, shape (N, 3)
+        Atomic dipole moment vectors in atomic units.
+    atcoords : np.ndarray, shape (N, 3)
+        Atomic coordinates in atomic units.
     points : np.ndarray, shape (M, 3)
+        Field points at which to evaluate the field.
 
     Returns
     -------
     field : np.ndarray, shape (M, 3)
+        Electric field at each field point in atomic units.
     """
     dipoles = np.asarray(dipoles)
-    coords = np.asarray(coords)
+    atcoords = np.asarray(atcoords)
     points = np.asarray(points)
-    validate_shapes(coords, points)
+    validate_shapes(atcoords, points)
 
-    if len(dipoles) != len(coords):
-        raise ValueError("dipoles and coords must have same length")
+    if len(dipoles) != len(atcoords):
+        raise ValueError("dipoles and atcoords must have same length")
 
     if dipoles.ndim != 2 or dipoles.shape[1] != 3:
         raise ValueError(
             f"dipoles must have shape (N, 3), got {dipoles.shape}"
         )
 
-    r_vecs, _, safe_r = compute_displacement(coords, points)
+    r_vecs, _, safe_r = compute_displacement(atcoords, points)
     r_hat = r_vecs / safe_r[:, :, np.newaxis]
     p_dot_rhat = np.einsum("ij,mij->mi", dipoles, r_hat)
     term = (3 * p_dot_rhat[:, :, np.newaxis] * r_hat
@@ -153,71 +177,83 @@ def dipole_field(dipoles, coords, points):
     return np.sum(term / safe_r[:, :, np.newaxis] ** 3, axis=1)
 
 
-def quadrupole_potential(quadrupoles, coords, points):
+def quadrupole_potential(quadrupoles, atcoords, points):
     """
     Compute electrostatic potential from atomic quadrupoles (traceless).
 
-    V(r) = sum_i [ Q_i:rr ] / (|r - r_i|^5)
+    .. math::
+
+        V(\\mathbf{r}) = \\sum_i \\frac{\\mathbf{Q}_i : \\mathbf{r}\\mathbf{r}}{|\\mathbf{r} - \\mathbf{r}_i|^5}
 
     Parameters
     ----------
     quadrupoles : np.ndarray, shape (N, 3, 3)
         Traceless quadrupole moment tensors in atomic units.
-    coords : np.ndarray, shape (N, 3)
+    atcoords : np.ndarray, shape (N, 3)
+        Atomic coordinates in atomic units.
     points : np.ndarray, shape (M, 3)
+        Field points at which to evaluate the potential.
 
     Returns
     -------
     potential : np.ndarray, shape (M,)
+        Electrostatic potential at each field point in atomic units.
     """
     quadrupoles = np.asarray(quadrupoles)
-    coords = np.asarray(coords)
+    atcoords = np.asarray(atcoords)
     points = np.asarray(points)
-    validate_shapes(coords, points)
+    validate_shapes(atcoords, points)
 
-    if len(quadrupoles) != len(coords):
-        raise ValueError("quadrupoles and coords must have same length")
+    if len(quadrupoles) != len(atcoords):
+        raise ValueError("quadrupoles and atcoords must have same length")
 
     if quadrupoles.ndim != 3 or quadrupoles.shape[1:] != (3, 3):
         raise ValueError(
             f"quadrupoles must have shape (N, 3, 3), got {quadrupoles.shape}"
         )
 
-    r_vecs, _, safe_r = compute_displacement(coords, points)
+    r_vecs, _, safe_r = compute_displacement(atcoords, points)
     Qrr = np.einsum("nab,mna,mnb->mn", quadrupoles, r_vecs, r_vecs)
     return np.sum(Qrr / (safe_r ** 5), axis=1)
 
 
-def quadrupole_field(quadrupoles, coords, points):
+def quadrupole_field(quadrupoles, atcoords, points):
     """
     Compute electric field from atomic quadrupoles (traceless).
 
-    E(r) = sum_i [ 5*(Q_i:rr)*r / (r^7) - (Q_i.r) / r^5 ]
+    .. math::
+
+        \\mathbf{E}(\\mathbf{r}) =
+        \\sum_i \\left[ \\frac{5(\\mathbf{Q}_i : \\mathbf{r}\\mathbf{r})\\,\\mathbf{r}}{r^7} - \\frac{\\mathbf{Q}_i \\cdot \\mathbf{r}}{r^5} \\right]
 
     Parameters
     ----------
     quadrupoles : np.ndarray, shape (N, 3, 3)
-    coords : np.ndarray, shape (N, 3)
+        Traceless quadrupole moment tensors in atomic units.
+    atcoords : np.ndarray, shape (N, 3)
+        Atomic coordinates in atomic units.
     points : np.ndarray, shape (M, 3)
+        Field points at which to evaluate the field.
 
     Returns
     -------
     field : np.ndarray, shape (M, 3)
+        Electric field at each field point in atomic units.
     """
     quadrupoles = np.asarray(quadrupoles)
-    coords = np.asarray(coords)
+    atcoords = np.asarray(atcoords)
     points = np.asarray(points)
-    validate_shapes(coords, points)
+    validate_shapes(atcoords, points)
 
-    if len(quadrupoles) != len(coords):
-        raise ValueError("quadrupoles and coords must have same length")
+    if len(quadrupoles) != len(atcoords):
+        raise ValueError("quadrupoles and atcoords must have same length")
 
     if quadrupoles.ndim != 3 or quadrupoles.shape[1:] != (3, 3):
         raise ValueError(
             f"quadrupoles must have shape (N, 3, 3), got {quadrupoles.shape}"
         )
 
-    r_vecs, _, safe_r = compute_displacement(coords, points)
+    r_vecs, _, safe_r = compute_displacement(atcoords, points)
     Qrr = np.einsum("nab,mna,mnb->mn", quadrupoles, r_vecs, r_vecs)
     Qr = np.einsum("nab,mnb->mna", quadrupoles, r_vecs)
     term1 = (5 * Qrr[:, :, np.newaxis] * r_vecs
@@ -226,79 +262,91 @@ def quadrupole_field(quadrupoles, coords, points):
     return np.sum(term1 - term2, axis=1)
 
 
-def total_potential(coords, points, charges=None, dipoles=None, quadrupoles=None):
+def total_potential(atcoords, points, atcharges=None, dipoles=None, quadrupoles=None):
     """
     Compute total electrostatic potential from all multipole contributions.
 
     Parameters
     ----------
-    coords : np.ndarray, shape (N, 3)
+    atcoords : np.ndarray, shape (N, 3)
+        Atomic coordinates in atomic units.
     points : np.ndarray, shape (M, 3)
-    charges : np.ndarray, shape (N,), optional
+        Field points at which to evaluate the potential.
+    atcharges : np.ndarray, shape (N,), optional
+        Atomic charges in atomic units.
     dipoles : np.ndarray, shape (N, 3), optional
+        Atomic dipole moment vectors in atomic units.
     quadrupoles : np.ndarray, shape (N, 3, 3), optional
+        Traceless quadrupole moment tensors in atomic units.
 
     Returns
     -------
     potential : np.ndarray, shape (M,)
+        Electrostatic potential at each field point in atomic units.
     """
-    coords = np.asarray(coords)
+    atcoords = np.asarray(atcoords)
     points = np.asarray(points)
-    validate_shapes(coords, points)
+    validate_shapes(atcoords, points)
 
-    if charges is not None and len(charges) != len(coords):
-        raise ValueError("charges and coords must have same length")
+    if atcharges is not None and len(atcharges) != len(atcoords):
+        raise ValueError("atcharges and atcoords must have same length")
 
-    if dipoles is not None and len(dipoles) != len(coords):
-        raise ValueError("dipoles and coords must have same length")
+    if dipoles is not None and len(dipoles) != len(atcoords):
+        raise ValueError("dipoles and atcoords must have same length")
 
-    if quadrupoles is not None and len(quadrupoles) != len(coords):
-        raise ValueError("quadrupoles and coords must have same length")
+    if quadrupoles is not None and len(quadrupoles) != len(atcoords):
+        raise ValueError("quadrupoles and atcoords must have same length")
 
     potential = np.zeros(points.shape[0])
-    if charges is not None:
-        potential += monopole_potential(charges, coords, points)
+    if atcharges is not None:
+        potential += monopole_potential(atcharges, atcoords, points)
     if dipoles is not None:
-        potential += dipole_potential(dipoles, coords, points)
+        potential += dipole_potential(dipoles, atcoords, points)
     if quadrupoles is not None:
-        potential += quadrupole_potential(quadrupoles, coords, points)
+        potential += quadrupole_potential(quadrupoles, atcoords, points)
     return potential
 
 
-def total_field(coords, points, charges=None, dipoles=None, quadrupoles=None):
+def total_field(atcoords, points, atcharges=None, dipoles=None, quadrupoles=None):
     """
     Compute total electric field from all multipole contributions.
 
     Parameters
     ----------
-    coords : np.ndarray, shape (N, 3)
+    atcoords : np.ndarray, shape (N, 3)
+        Atomic coordinates in atomic units.
     points : np.ndarray, shape (M, 3)
-    charges : np.ndarray, shape (N,), optional
+        Field points at which to evaluate the field.
+    atcharges : np.ndarray, shape (N,), optional
+        Atomic charges in atomic units.
     dipoles : np.ndarray, shape (N, 3), optional
+        Atomic dipole moment vectors in atomic units.
     quadrupoles : np.ndarray, shape (N, 3, 3), optional
+        Traceless quadrupole moment tensors in atomic units.
 
     Returns
     -------
     field : np.ndarray, shape (M, 3)
+        Electric field at each field point in atomic units.
     """
-    coords = np.asarray(coords)
+    atcoords = np.asarray(atcoords)
     points = np.asarray(points)
-    validate_shapes(coords, points)
+    validate_shapes(atcoords, points)
 
-    if charges is not None and len(charges) != len(coords):
-        raise ValueError("charges and coords must have same length")
+    if atcharges is not None and len(atcharges) != len(atcoords):
+        raise ValueError("atcharges and atcoords must have same length")
 
-    if dipoles is not None and len(dipoles) != len(coords):
-        raise ValueError("dipoles and coords must have same length")
+    if dipoles is not None and len(dipoles) != len(atcoords):
+        raise ValueError("dipoles and atcoords must have same length")
 
-    if quadrupoles is not None and len(quadrupoles) != len(coords):
-        raise ValueError("quadrupoles and coords must have same length")
+    if quadrupoles is not None and len(quadrupoles) != len(atcoords):
+        raise ValueError("quadrupoles and atcoords must have same length")
 
     field = np.zeros((points.shape[0], 3))
-    if charges is not None:
-        field += monopole_field(charges, coords, points)
+    if atcharges is not None:
+        field += monopole_field(atcharges, atcoords, points)
     if dipoles is not None:
-        field += dipole_field(dipoles, coords, points)
+        field += dipole_field(dipoles, atcoords, points)
     if quadrupoles is not None:
-        field += quadrupole_field(quadrupoles, coords, points)
+        field += quadrupole_field(quadrupoles, atcoords, points)
     return field
