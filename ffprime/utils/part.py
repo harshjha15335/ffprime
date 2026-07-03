@@ -98,15 +98,13 @@ class Partitioning:
         result.alpha = a_eff
         result.sigma = sigma
         result.epsilon = epsilon
-
-        # guarda el objeto "part" real por si lo necesitas
         result.part = part
 
         self.part = result
         return result
 
-        #else:
-        #    raise ValueError(f"Given scheme={scheme} not supported!")
+        else:
+            raise ValueError(f"Given scheme={scheme} not supported!")
 
 
 def compute_cartesian_atomic_moments(pro_model, grid, moldens, localgrids):
