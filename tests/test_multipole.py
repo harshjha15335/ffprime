@@ -180,10 +180,10 @@ class TestDipolePotential:
         p=(1,0,0) at origin, point at (2,0,0):
         V = (p.r)/r^3 = 2/8 = 0.25
         """
-        dipoles = np.array([[1.0, 0.0, 0.0]])
+        atdipoles = np.array([[1.0, 0.0, 0.0]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[2.0, 0.0, 0.0]])
-        result = dipole_potential(dipoles, atcoords, points)
+        result = dipole_potential(atdipoles, atcoords, points)
         assert_allclose(result, [0.25], rtol=1e-10)
 
     def test_dipole_perpendicular_zero(self):
@@ -191,28 +191,28 @@ class TestDipolePotential:
         p=(1,0,0), point at (0,2,0):
         V = (p.r)/r^3 = 0 (perpendicular)
         """
-        dipoles = np.array([[1.0, 0.0, 0.0]])
+        atdipoles = np.array([[1.0, 0.0, 0.0]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[0.0, 2.0, 0.0]])
-        result = dipole_potential(dipoles, atcoords, points)
+        result = dipole_potential(atdipoles, atcoords, points)
         assert_allclose(result, [0.0], atol=1e-12)
 
     def test_dipole_antisymmetry(self):
         """V at +r and -r are equal and opposite"""
-        dipoles = np.array([[1.0, 0.0, 0.0]])
+        atdipoles = np.array([[1.0, 0.0, 0.0]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[2.0, 0.0, 0.0],
                            [-2.0, 0.0, 0.0]])
-        result = dipole_potential(dipoles, atcoords, points)
+        result = dipole_potential(atdipoles, atcoords, points)
         assert_allclose(result[0], -result[1], rtol=1e-10)
 
     def test_dipole_scales_as_inverse_r_squared(self):
         """V_dipole scales as 1/r^2"""
-        dipoles = np.array([[1.0, 0.0, 0.0]])
+        atdipoles = np.array([[1.0, 0.0, 0.0]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[1.0, 0.0, 0.0],
                            [2.0, 0.0, 0.0]])
-        result = dipole_potential(dipoles, atcoords, points)
+        result = dipole_potential(atdipoles, atcoords, points)
         assert_allclose(result[0] / result[1], 4.0, rtol=1e-10)
 
     def test_analytical_on_axis(self):
@@ -220,10 +220,10 @@ class TestDipolePotential:
         Verify V = p / r^2 for a dipole at the origin with a field
         point on the dipole axis (p=(0,0,1.5), r=3.0 → V=1/6).
         """
-        dipoles = np.array([[0.0, 0.0, 1.5]])
+        atdipoles = np.array([[0.0, 0.0, 1.5]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[0.0, 0.0, 3.0]])
-        result = dipole_potential(dipoles, atcoords, points)
+        result = dipole_potential(atdipoles, atcoords, points)
         p = 1.5
         r = 3.0
         expected = np.array([p / r**2])
@@ -234,10 +234,10 @@ class TestDipolePotential:
         Verify V = 0 in the equatorial plane perpendicular to the
         dipole (p=(0,0,1), point=(2,1.5,0), so p . r = 0).
         """
-        dipoles = np.array([[0.0, 0.0, 1.0]])
+        atdipoles = np.array([[0.0, 0.0, 1.0]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[2.0, 1.5, 0.0]])
-        result = dipole_potential(dipoles, atcoords, points)
+        result = dipole_potential(atdipoles, atcoords, points)
         assert_allclose(result, [0.0], atol=1e-12)
 
 
@@ -250,10 +250,10 @@ class TestDipoleField:
           = [3*(0,0,1) - (0,0,1)] / 8
           = (0, 0, 0.25)
         """
-        dipoles = np.array([[0.0, 0.0, 1.0]])
+        atdipoles = np.array([[0.0, 0.0, 1.0]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[0.0, 0.0, 2.0]])
-        result = dipole_field(dipoles, atcoords, points)
+        result = dipole_field(atdipoles, atcoords, points)
         assert_allclose(result, [[0.0, 0.0, 0.25]], rtol=1e-10)
 
     def test_dipole_field_perpendicular(self):
@@ -262,18 +262,18 @@ class TestDipoleField:
         r̂=(1,0,0), p.r̂=0
         E = [0 - (0,0,1)] / 8 = (0, 0, -0.125)
         """
-        dipoles = np.array([[0.0, 0.0, 1.0]])
+        atdipoles = np.array([[0.0, 0.0, 1.0]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[2.0, 0.0, 0.0]])
-        result = dipole_field(dipoles, atcoords, points)
+        result = dipole_field(atdipoles, atcoords, points)
         assert_allclose(result, [[0.0, 0.0, -0.125]], rtol=1e-10)
 
     def test_singularity_safe(self):
         """Field at exact atom location returns finite value"""
-        dipoles = np.array([[1.0, 0.0, 0.0]])
+        atdipoles = np.array([[1.0, 0.0, 0.0]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[0.0, 0.0, 0.0]])
-        result = dipole_field(dipoles, atcoords, points)
+        result = dipole_field(atdipoles, atcoords, points)
         assert np.isfinite(result).all()
 
     def test_analytical_on_axis(self):
@@ -281,10 +281,10 @@ class TestDipoleField:
         Verify E_z = 2p / r^3 on the dipole axis
         (p=(0,0,1.2), r=2.0 → E=(0,0,0.3)).
         """
-        dipoles = np.array([[0.0, 0.0, 1.2]])
+        atdipoles = np.array([[0.0, 0.0, 1.2]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[0.0, 0.0, 2.0]])
-        result = dipole_field(dipoles, atcoords, points)
+        result = dipole_field(atdipoles, atcoords, points)
         p = 1.2
         r = 2.0
         expected = np.array([[0.0, 0.0, 2.0 * p / r**3]])
@@ -295,10 +295,10 @@ class TestDipoleField:
         Verify E = -p / r^3 (z-component only) in the equatorial plane
         (p=(0,0,1.5), point=(2,0,0) → E=(0,0,-1.5/8)).
         """
-        dipoles = np.array([[0.0, 0.0, 1.5]])
+        atdipoles = np.array([[0.0, 0.0, 1.5]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[2.0, 0.0, 0.0]])
-        result = dipole_field(dipoles, atcoords, points)
+        result = dipole_field(atdipoles, atcoords, points)
         p = 1.5
         r = 2.0
         expected = np.array([[0.0, 0.0, -p / r**3]])
@@ -314,63 +314,63 @@ class TestQuadrupolePotential:
     def test_analytical_on_axis(self):
         """
         Verify V = Qrr / r^5 on the quadrupole axis.
-        quadrupoles = diag(-1,-1,2), point=(0,0,2):
+        atquadrupoles = diag(-1,-1,2), point=(0,0,2):
         Qrr = 2*4 = 8, r = 2 → V = 8/32 = 0.25
         """
-        quadrupoles = np.array([[[-1.0, 0.0, 0.0],
-                                 [0.0, -1.0, 0.0],
-                                 [0.0,  0.0, 2.0]]])
+        atquadrupoles = np.array([[[-1.0, 0.0, 0.0],
+                                   [0.0, -1.0, 0.0],
+                                   [0.0,  0.0, 2.0]]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[0.0, 0.0, 2.0]])
-        result = quadrupole_potential(quadrupoles, atcoords, points)
+        result = quadrupole_potential(atquadrupoles, atcoords, points)
         assert_allclose(result, [0.25], rtol=1e-10)
 
     def test_traceless_symmetry(self):
         """Trace of the quadrupole tensor should not contribute — pure traceless result"""
-        quadrupoles = np.array([[[2.0, 0.0, 0.0],
-                                 [0.0, -1.0, 0.0],
-                                 [0.0,  0.0, -1.0]]])
+        atquadrupoles = np.array([[[2.0, 0.0, 0.0],
+                                   [0.0, -1.0, 0.0],
+                                   [0.0,  0.0, -1.0]]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[2.0, 0.0, 0.0]])
-        result = quadrupole_potential(quadrupoles, atcoords, points)
+        result = quadrupole_potential(atquadrupoles, atcoords, points)
         assert np.isfinite(result).all()
 
     def test_singularity_safe(self):
         """Potential at exact atom location returns finite value"""
-        quadrupoles = np.array([[[1.0, 0.0, 0.0],
-                                 [0.0, -0.5, 0.0],
-                                 [0.0, 0.0, -0.5]]])
+        atquadrupoles = np.array([[[1.0, 0.0, 0.0],
+                                   [0.0, -0.5, 0.0],
+                                   [0.0, 0.0, -0.5]]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[0.0, 0.0, 0.0]])
-        result = quadrupole_potential(quadrupoles, atcoords, points)
+        result = quadrupole_potential(atquadrupoles, atcoords, points)
         assert np.isfinite(result).all()
 
     def test_analytical_equatorial_plane(self):
         """
         Verify V = Qrr / r^5 in the equatorial plane.
-        quadrupoles = diag(-1,-1,2), point=(2,0,0):
+        atquadrupoles = diag(-1,-1,2), point=(2,0,0):
         Qrr = -1*4 = -4, r = 2 → V = -4/32 = -0.125
         """
-        quadrupoles = np.array([[[-1.0, 0.0, 0.0],
-                                 [0.0, -1.0, 0.0],
-                                 [0.0,  0.0, 2.0]]])
+        atquadrupoles = np.array([[[-1.0, 0.0, 0.0],
+                                   [0.0, -1.0, 0.0],
+                                   [0.0,  0.0, 2.0]]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[2.0, 0.0, 0.0]])
-        result = quadrupole_potential(quadrupoles, atcoords, points)
+        result = quadrupole_potential(atquadrupoles, atcoords, points)
         assert_allclose(result, [-0.125], rtol=1e-10)
 
     def test_analytical_scaling(self):
         """
         Verify V_quadrupole scales as 1/r^3 on-axis.
-        quadrupoles = diag(-1,-1,2), comparing r=2 and r=4 → ratio = (4/2)^3 = 8
+        atquadrupoles = diag(-1,-1,2), comparing r=2 and r=4 → ratio = (4/2)^3 = 8
         """
-        quadrupoles = np.array([[[-1.0, 0.0, 0.0],
-                                 [0.0, -1.0, 0.0],
-                                 [0.0,  0.0, 2.0]]])
+        atquadrupoles = np.array([[[-1.0, 0.0, 0.0],
+                                   [0.0, -1.0, 0.0],
+                                   [0.0,  0.0, 2.0]]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[0.0, 0.0, 2.0],
                            [0.0, 0.0, 4.0]])
-        result = quadrupole_potential(quadrupoles, atcoords, points)
+        result = quadrupole_potential(atquadrupoles, atcoords, points)
         assert_allclose(result[0] / result[1], 8.0, rtol=1e-10)
 
 
@@ -378,67 +378,67 @@ class TestQuadrupoleField:
 
     def test_quadrupole_field_finite(self):
         """Field from quadrupole is finite at valid points"""
-        quadrupoles = np.array([[[-1.0, 0.0, 0.0],
-                                 [0.0, -1.0, 0.0],
-                                 [0.0,  0.0, 2.0]]])
+        atquadrupoles = np.array([[[-1.0, 0.0, 0.0],
+                                   [0.0, -1.0, 0.0],
+                                   [0.0,  0.0, 2.0]]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[0.0, 0.0, 2.0],
                            [1.0, 0.0, 0.0],
                            [0.0, 1.0, 1.0]])
-        result = quadrupole_field(quadrupoles, atcoords, points)
+        result = quadrupole_field(atquadrupoles, atcoords, points)
         assert np.isfinite(result).all()
 
     def test_singularity_safe(self):
         """Field at exact atom location returns finite value"""
-        quadrupoles = np.array([[[1.0, 0.0, 0.0],
-                                 [0.0, -0.5, 0.0],
-                                 [0.0, 0.0, -0.5]]])
+        atquadrupoles = np.array([[[1.0, 0.0, 0.0],
+                                   [0.0, -0.5, 0.0],
+                                   [0.0, 0.0, -0.5]]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[0.0, 0.0, 0.0]])
-        result = quadrupole_field(quadrupoles, atcoords, points)
+        result = quadrupole_field(atquadrupoles, atcoords, points)
         assert np.isfinite(result).all()
 
     def test_analytical_on_axis(self):
         """
         Verify E = 5(r^T Q r) r / r^7 - 2 Q r / r^5 on the quadrupole axis.
-        quadrupoles = diag(-1,-1,2), point=(0,0,2) → E = (0,0,0.375)
+        atquadrupoles = diag(-1,-1,2), point=(0,0,2) → E = (0,0,0.375)
         """
-        quadrupoles = np.array([[[-1.0, 0.0, 0.0],
-                                 [0.0, -1.0, 0.0],
-                                 [0.0,  0.0, 2.0]]])
+        atquadrupoles = np.array([[[-1.0, 0.0, 0.0],
+                                   [0.0, -1.0, 0.0],
+                                   [0.0,  0.0, 2.0]]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[0.0, 0.0, 2.0]])
-        result = quadrupole_field(quadrupoles, atcoords, points)
+        result = quadrupole_field(atquadrupoles, atcoords, points)
         expected = np.array([[0.0, 0.0, 0.375]])
         assert_allclose(result, expected, rtol=1e-10)
 
     def test_analytical_equatorial_plane(self):
         """
         Verify E = 5(r^T Q r) r / r^7 - 2 Q r / r^5 in the equatorial plane.
-        quadrupoles = diag(-1,-1,2), point=(2,0,0) → E = (-0.1875,0,0)
+        atquadrupoles = diag(-1,-1,2), point=(2,0,0) → E = (-0.1875,0,0)
         """
-        quadrupoles = np.array([[[-1.0, 0.0, 0.0],
-                                 [0.0, -1.0, 0.0],
-                                 [0.0,  0.0, 2.0]]])
+        atquadrupoles = np.array([[[-1.0, 0.0, 0.0],
+                                   [0.0, -1.0, 0.0],
+                                   [0.0,  0.0, 2.0]]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[2.0, 0.0, 0.0]])
-        result = quadrupole_field(quadrupoles, atcoords, points)
+        result = quadrupole_field(atquadrupoles, atcoords, points)
         expected = np.array([[-0.1875, 0.0, 0.0]])
         assert_allclose(result, expected, rtol=1e-10)
 
     def test_analytical_scaling(self):
         """
         Verify E_quadrupole scales as 1/r^4 on-axis.
-        quadrupoles = diag(-1,-1,2), comparing r=2 and r=4 → ratio = (4/2)^4 = 16
+        atquadrupoles = diag(-1,-1,2), comparing r=2 and r=4 → ratio = (4/2)^4 = 16
         """
-        quadrupoles = np.array([[[-1.0, 0.0, 0.0],
-                                 [0.0, -1.0, 0.0],
-                                 [0.0,  0.0, 2.0]]])
+        atquadrupoles = np.array([[[-1.0, 0.0, 0.0],
+                                   [0.0, -1.0, 0.0],
+                                   [0.0,  0.0, 2.0]]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         point_near = np.array([[0.0, 0.0, 2.0]])
         point_far = np.array([[0.0, 0.0, 4.0]])
-        result_near = quadrupole_field(quadrupoles, atcoords, point_near)
-        result_far = quadrupole_field(quadrupoles, atcoords, point_far)
+        result_near = quadrupole_field(atquadrupoles, atcoords, point_near)
+        result_far = quadrupole_field(atquadrupoles, atcoords, point_far)
         ratio = np.linalg.norm(result_near[0]) / np.linalg.norm(result_far[0])
         assert_allclose(ratio, 16.0, rtol=1e-10)
 
@@ -461,10 +461,10 @@ class TestTotalPotential:
     def test_superposition_all_terms(self):
         """Total potential is sum of all individual contributions"""
         charges = np.array([1.0])
-        dipoles = np.array([[1.0, 0.0, 0.0]])
-        quadrupoles = np.array([[[-1.0, 0.0, 0.0],
-                                 [0.0, -1.0, 0.0],
-                                 [0.0,  0.0, 2.0]]])
+        atdipoles = np.array([[1.0, 0.0, 0.0]])
+        atquadrupoles = np.array([[[-1.0, 0.0, 0.0],
+                                   [0.0, -1.0, 0.0],
+                                   [0.0,  0.0, 2.0]]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[2.0, 1.0, 0.0]])
 
@@ -472,12 +472,12 @@ class TestTotalPotential:
             atcoords,
             points,
             atcharges=charges,
-            dipoles=dipoles,
-            quadrupoles=quadrupoles,
+            dipoles=atdipoles,
+            quadrupoles=atquadrupoles,
         )
         expected = (monopole_potential(charges, atcoords, points) +
-                    dipole_potential(dipoles, atcoords, points) +
-                    quadrupole_potential(quadrupoles, atcoords, points))
+                    dipole_potential(atdipoles, atcoords, points) +
+                    quadrupole_potential(atquadrupoles, atcoords, points))
         assert_allclose(total, expected, rtol=1e-10)
 
 
@@ -495,10 +495,10 @@ class TestTotalField:
     def test_superposition_all_terms(self):
         """Total field is sum of all individual contributions"""
         charges = np.array([1.0])
-        dipoles = np.array([[1.0, 0.0, 0.0]])
-        quadrupoles = np.array([[[-1.0, 0.0, 0.0],
-                                 [0.0, -1.0, 0.0],
-                                 [0.0,  0.0, 2.0]]])
+        atdipoles = np.array([[1.0, 0.0, 0.0]])
+        atquadrupoles = np.array([[[-1.0, 0.0, 0.0],
+                                   [0.0, -1.0, 0.0],
+                                   [0.0,  0.0, 2.0]]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[2.0, 1.0, 0.0]])
 
@@ -506,12 +506,12 @@ class TestTotalField:
             atcoords,
             points,
             atcharges=charges,
-            dipoles=dipoles,
-            quadrupoles=quadrupoles,
+            dipoles=atdipoles,
+            quadrupoles=atquadrupoles,
         )
         expected = (monopole_field(charges, atcoords, points) +
-                    dipole_field(dipoles, atcoords, points) +
-                    quadrupole_field(quadrupoles, atcoords, points))
+                    dipole_field(atdipoles, atcoords, points) +
+                    quadrupole_field(atquadrupoles, atcoords, points))
         assert_allclose(total, expected, rtol=1e-10)
 
 
@@ -551,7 +551,7 @@ def _assert_field_matches_gradient(atcharges, atcoords, point, h=FD_STEP,
     assert_allclose(numerical_field, analytic_field, rtol=rtol, atol=atol)
 
 
-def _compute_dipole_gradient(dipoles, atcoords, point, h=FD_STEP):
+def _compute_dipole_gradient(atdipoles, atcoords, point, h=FD_STEP):
     """
     Compute a numerical approximation to the gradient of the dipole
     potential using second-order central finite differences.
@@ -569,21 +569,21 @@ def _compute_dipole_gradient(dipoles, atcoords, point, h=FD_STEP):
         point_minus = point.copy()
         point_plus[i] += h
         point_minus[i] -= h
-        v_plus = dipole_potential(dipoles, atcoords, point_plus.reshape(1, 3))[0]
-        v_minus = dipole_potential(dipoles, atcoords, point_minus.reshape(1, 3))[0]
+        v_plus = dipole_potential(atdipoles, atcoords, point_plus.reshape(1, 3))[0]
+        v_minus = dipole_potential(atdipoles, atcoords, point_minus.reshape(1, 3))[0]
         grad[i] = (v_plus - v_minus) / (2.0 * h)
     return grad
 
 
-def _assert_dipole_field_matches_gradient(dipoles, atcoords, point, h=FD_STEP,
+def _assert_dipole_field_matches_gradient(atdipoles, atcoords, point, h=FD_STEP,
                                           rtol=1e-6, atol=1e-8):
     """Assert that dipole_field equals -∇V at ``point``, via finite differences."""
-    analytic_field = dipole_field(dipoles, atcoords, point.reshape(1, 3))[0]
-    numerical_field = -_compute_dipole_gradient(dipoles, atcoords, point, h=h)
+    analytic_field = dipole_field(atdipoles, atcoords, point.reshape(1, 3))[0]
+    numerical_field = -_compute_dipole_gradient(atdipoles, atcoords, point, h=h)
     assert_allclose(numerical_field, analytic_field, rtol=rtol, atol=atol)
 
 
-def _compute_quadrupole_gradient(quadrupoles, atcoords, point, h=FD_STEP):
+def _compute_quadrupole_gradient(atquadrupoles, atcoords, point, h=FD_STEP):
     """
     Compute a numerical approximation to the gradient of the quadrupole
     potential using second-order central finite differences.
@@ -601,17 +601,17 @@ def _compute_quadrupole_gradient(quadrupoles, atcoords, point, h=FD_STEP):
         point_minus = point.copy()
         point_plus[i] += h
         point_minus[i] -= h
-        v_plus = quadrupole_potential(quadrupoles, atcoords, point_plus.reshape(1, 3))[0]
-        v_minus = quadrupole_potential(quadrupoles, atcoords, point_minus.reshape(1, 3))[0]
+        v_plus = quadrupole_potential(atquadrupoles, atcoords, point_plus.reshape(1, 3))[0]
+        v_minus = quadrupole_potential(atquadrupoles, atcoords, point_minus.reshape(1, 3))[0]
         grad[i] = (v_plus - v_minus) / (2.0 * h)
     return grad
 
 
-def _assert_quadrupole_field_matches_gradient(quadrupoles, atcoords, point, h=FD_STEP,
+def _assert_quadrupole_field_matches_gradient(atquadrupoles, atcoords, point, h=FD_STEP,
                                               rtol=1e-6, atol=1e-8):
     """Assert that quadrupole_field equals -∇V at ``point``, via finite differences."""
-    analytic_field = quadrupole_field(quadrupoles, atcoords, point.reshape(1, 3))[0]
-    numerical_field = -_compute_quadrupole_gradient(quadrupoles, atcoords, point, h=h)
+    analytic_field = quadrupole_field(atquadrupoles, atcoords, point.reshape(1, 3))[0]
+    numerical_field = -_compute_quadrupole_gradient(atquadrupoles, atcoords, point, h=h)
     assert_allclose(numerical_field, analytic_field, rtol=rtol, atol=atol)
 
 
@@ -698,10 +698,10 @@ class TestDipoleGradientConsistency:
         .. math::
             \\mathbf{E} = -\\nabla V
         """
-        dipoles = np.array([[0.5, -1.2, 0.8]])
+        atdipoles = np.array([[0.5, -1.2, 0.8]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         point = np.array([1.2, -0.7, 0.5])
-        _assert_dipole_field_matches_gradient(dipoles, atcoords, point)
+        _assert_dipole_field_matches_gradient(atdipoles, atcoords, point)
 
     def test_field_matches_numerical_gradient_randomized(self):
         """
@@ -718,7 +718,7 @@ class TestDipoleGradientConsistency:
 
         for _ in range(20):
             n_dipoles = rng.integers(1, 4)
-            dipoles = rng.uniform(-2.0, 2.0, size=(n_dipoles, 3))
+            atdipoles = rng.uniform(-2.0, 2.0, size=(n_dipoles, 3))
             atcoords = rng.uniform(-1.0, 1.0, size=(n_dipoles, 3))
 
             while True:
@@ -727,7 +727,7 @@ class TestDipoleGradientConsistency:
                 if np.all(distances > min_distance):
                     break
 
-            _assert_dipole_field_matches_gradient(dipoles, atcoords, point,
+            _assert_dipole_field_matches_gradient(atdipoles, atcoords, point,
                                                   rtol=1e-5, atol=1e-7)
 
     def test_field_matches_numerical_gradient_near_singularity(self):
@@ -738,10 +738,10 @@ class TestDipoleGradientConsistency:
         Finite differences become less accurate close to the singularity,
         so a larger step and looser tolerances are used here.
         """
-        dipoles = np.array([[1.0, 0.5, -0.2]])
+        atdipoles = np.array([[1.0, 0.5, -0.2]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         point = np.array([1e-3, 0.0, 0.0])
-        _assert_dipole_field_matches_gradient(dipoles, atcoords, point,
+        _assert_dipole_field_matches_gradient(atdipoles, atcoords, point,
                                               h=1e-6, rtol=1e-3, atol=1e-3)
 
 
@@ -759,14 +759,14 @@ class TestQuadrupoleGradientConsistency:
         .. math::
             \\mathbf{E} = -\\nabla V
         """
-        quadrupoles = np.array([
+        atquadrupoles = np.array([
             [[-1.0, 0.2, 0.0],
              [0.2, -0.5, 0.1],
              [0.0, 0.1, 1.5]]
         ])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         point = np.array([1.2, -0.7, 0.5])
-        _assert_quadrupole_field_matches_gradient(quadrupoles, atcoords, point)
+        _assert_quadrupole_field_matches_gradient(atquadrupoles, atcoords, point)
 
     def test_field_matches_numerical_gradient_randomized(self):
         """
@@ -784,12 +784,12 @@ class TestQuadrupoleGradientConsistency:
         for _ in range(20):
             n_quadrupoles = rng.integers(1, 4)
 
-            quadrupoles = np.zeros((n_quadrupoles, 3, 3))
+            atquadrupoles = np.zeros((n_quadrupoles, 3, 3))
             for j in range(n_quadrupoles):
                 A = rng.uniform(-1.0, 1.0, (3, 3))
                 quadrupole = 0.5 * (A + A.T)
                 quadrupole -= np.eye(3) * np.trace(quadrupole) / 3
-                quadrupoles[j] = quadrupole
+                atquadrupoles[j] = quadrupole
 
             atcoords = rng.uniform(-1.0, 1.0, size=(n_quadrupoles, 3))
 
@@ -799,7 +799,7 @@ class TestQuadrupoleGradientConsistency:
                 if np.all(distances > min_distance):
                     break
 
-            _assert_quadrupole_field_matches_gradient(quadrupoles, atcoords, point,
+            _assert_quadrupole_field_matches_gradient(atquadrupoles, atcoords, point,
                                                        rtol=1e-5, atol=1e-7)
 
     def test_field_matches_numerical_gradient_near_singularity(self):
@@ -810,14 +810,14 @@ class TestQuadrupoleGradientConsistency:
         Finite differences become less accurate close to the singularity,
         so a larger step and looser tolerances are used here.
         """
-        quadrupoles = np.array([
+        atquadrupoles = np.array([
             [[-1.0, 0.0, 0.0],
              [0.0, -1.0, 0.0],
              [0.0, 0.0, 2.0]]
         ])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         point = np.array([1e-3, 0.0, 0.0])
-        _assert_quadrupole_field_matches_gradient(quadrupoles, atcoords, point,
+        _assert_quadrupole_field_matches_gradient(atquadrupoles, atcoords, point,
                                                    h=1e-6, rtol=1e-3, atol=1e-3)
 
 
@@ -874,34 +874,34 @@ class TestQuadrupoleStability:
 
     def test_far_field_finite(self):
         """Field remains finite at a very large distance from the quadrupole."""
-        quadrupoles = np.array([[[-1.0, 0.0, 0.0],
-                                 [0.0, -1.0, 0.0],
-                                 [0.0,  0.0, 2.0]]])
+        atquadrupoles = np.array([[[-1.0, 0.0, 0.0],
+                                   [0.0, -1.0, 0.0],
+                                   [0.0,  0.0, 2.0]]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[1000.0, 1000.0, 1000.0]])
-        result = quadrupole_field(quadrupoles, atcoords, points)
+        result = quadrupole_field(atquadrupoles, atcoords, points)
         assert np.isfinite(result).all()
 
     def test_nearly_singular_point_finite(self):
         """Field remains finite very close to (but not exactly at) the quadrupole."""
-        quadrupoles = np.array([[[-1.0, 0.0, 0.0],
-                                 [0.0, -1.0, 0.0],
-                                 [0.0,  0.0, 2.0]]])
+        atquadrupoles = np.array([[[-1.0, 0.0, 0.0],
+                                   [0.0, -1.0, 0.0],
+                                   [0.0,  0.0, 2.0]]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[1e-8, 0.0, 0.0]])
-        result = quadrupole_field(quadrupoles, atcoords, points)
+        result = quadrupole_field(atquadrupoles, atcoords, points)
         assert np.isfinite(result).all()
 
     def test_multiple_field_points_vectorized(self):
         """Vectorized evaluation over multiple points returns finite (4, 3) array."""
-        quadrupoles = np.array([[[-1.0, 0.0, 0.0],
-                                 [0.0, -1.0, 0.0],
-                                 [0.0,  0.0, 2.0]]])
+        atquadrupoles = np.array([[[-1.0, 0.0, 0.0],
+                                   [0.0, -1.0, 0.0],
+                                   [0.0,  0.0, 2.0]]])
         atcoords = np.array([[0.0, 0.0, 0.0]])
         points = np.array([[2.0, 0.0, 0.0],
                            [0.0, 2.0, 0.0],
                            [0.0, 0.0, 2.0],
                            [1.0, 1.0, 1.0]])
-        result = quadrupole_field(quadrupoles, atcoords, points)
+        result = quadrupole_field(atquadrupoles, atcoords, points)
         assert result.shape == (4, 3)
         assert np.isfinite(result).all()

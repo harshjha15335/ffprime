@@ -27,11 +27,11 @@ class MultipoleExpansion:
         Atomic coordinates of the multipole sites, in atomic units.
     atcharges : np.ndarray, shape (N,), optional
         Atomic monopole (charge) moments, in atomic units.
-    dipoles : np.ndarray, optional
-        Dipole moments. Shape depends on ``representation``: ``(N, 3)``
+    atdipoles : np.ndarray, optional
+        Atomic dipole moments. Shape depends on ``representation``: ``(N, 3)``
         for both ``"cartesian"`` and ``"spherical"``.
-    quadrupoles : np.ndarray, optional
-        Quadrupole moments. Shape depends on ``representation``:
+    atquadrupoles : np.ndarray, optional
+        Atomic quadrupole moments. Shape depends on ``representation``:
         ``(N, 3, 3)`` for ``"cartesian"`` (symmetric traceless tensor)
         and ``(N, 5)`` for ``"spherical"`` (real spherical components).
     representation : str, optional
@@ -41,16 +41,16 @@ class MultipoleExpansion:
     Attributes
     ----------
     representation : str
-        Representation in which ``dipoles`` and ``quadrupoles`` are
+        Representation in which ``atdipoles`` and ``atquadrupoles`` are
         stored. One of ``"cartesian"`` or ``"spherical"``.
     atcoords : np.ndarray, shape (N, 3)
         Atomic coordinates of the multipole sites.
     atcharges : np.ndarray, shape (N,) or None
         Atomic monopole (charge) moments.
-    dipoles : np.ndarray or None
-        Dipole moments, in the stored representation.
-    quadrupoles : np.ndarray or None
-        Quadrupole moments, in the stored representation.
+    atdipoles : np.ndarray or None
+        Atomic dipole moments, in the stored representation.
+    atquadrupoles : np.ndarray or None
+        Atomic quadrupole moments, in the stored representation.
 
     Raises
     ------
@@ -65,8 +65,8 @@ class MultipoleExpansion:
         self,
         atcoords: np.ndarray,
         atcharges: np.ndarray | None = None,
-        dipoles: np.ndarray | None = None,
-        quadrupoles: np.ndarray | None = None,
+        atdipoles: np.ndarray | None = None,
+        atquadrupoles: np.ndarray | None = None,
         representation: str = "cartesian",
     ) -> None:
         """Store an atom-centered multipole expansion in the chosen form."""
@@ -84,11 +84,11 @@ class MultipoleExpansion:
         self.atcharges: np.ndarray | None = (
             None if atcharges is None else np.asarray(atcharges)
         )
-        self.dipoles: np.ndarray | None = (
-            None if dipoles is None else np.asarray(dipoles)
+        self.atdipoles: np.ndarray | None = (
+            None if atdipoles is None else np.asarray(atdipoles)
         )
-        self.quadrupoles: np.ndarray | None = (
-            None if quadrupoles is None else np.asarray(quadrupoles)
+        self.atquadrupoles: np.ndarray | None = (
+            None if atquadrupoles is None else np.asarray(atquadrupoles)
         )
 
     @classmethod
@@ -96,8 +96,8 @@ class MultipoleExpansion:
         cls,
         atcoords: np.ndarray,
         atcharges: np.ndarray | None = None,
-        dipoles: np.ndarray | None = None,
-        quadrupoles: np.ndarray | None = None,
+        atdipoles: np.ndarray | None = None,
+        atquadrupoles: np.ndarray | None = None,
     ) -> "MultipoleExpansion":
         """Build a :class:`MultipoleExpansion` from Cartesian multipoles.
 
@@ -107,11 +107,11 @@ class MultipoleExpansion:
             Atomic coordinates of the multipole sites, in atomic units.
         atcharges : np.ndarray, shape (N,), optional
             Atomic monopole (charge) moments, in atomic units.
-        dipoles : np.ndarray, shape (N, 3), optional
-            Cartesian dipole moment vectors, in atomic units.
-        quadrupoles : np.ndarray, shape (N, 3, 3), optional
-            Symmetric traceless Cartesian quadrupole moment tensors, in
-            atomic units.
+        atdipoles : np.ndarray, shape (N, 3), optional
+            Cartesian atomic dipole moment vectors, in atomic units.
+        atquadrupoles : np.ndarray, shape (N, 3, 3), optional
+            Symmetric traceless Cartesian atomic quadrupole moment
+            tensors, in atomic units.
 
         Returns
         -------
@@ -122,8 +122,8 @@ class MultipoleExpansion:
         return cls(
             atcoords=atcoords,
             atcharges=atcharges,
-            dipoles=dipoles,
-            quadrupoles=quadrupoles,
+            atdipoles=atdipoles,
+            atquadrupoles=atquadrupoles,
             representation="cartesian",
         )
 
@@ -132,8 +132,8 @@ class MultipoleExpansion:
         cls,
         atcoords: np.ndarray,
         atcharges: np.ndarray | None = None,
-        dipoles: np.ndarray | None = None,
-        quadrupoles: np.ndarray | None = None,
+        atdipoles: np.ndarray | None = None,
+        atquadrupoles: np.ndarray | None = None,
     ) -> "MultipoleExpansion":
         """Build a :class:`MultipoleExpansion` from real spherical multipoles.
 
@@ -145,10 +145,11 @@ class MultipoleExpansion:
             Atomic monopole (charge) moments, in atomic units. Charges
             have no orientation and are identical in both
             representations.
-        dipoles : np.ndarray, shape (N, 3), optional
-            Real spherical dipole components (Stone convention).
-        quadrupoles : np.ndarray, shape (N, 5), optional
-            Real spherical quadrupole components (Stone convention).
+        atdipoles : np.ndarray, shape (N, 3), optional
+            Real spherical atomic dipole components (Stone convention).
+        atquadrupoles : np.ndarray, shape (N, 5), optional
+            Real spherical atomic quadrupole components (Stone
+            convention).
 
         Returns
         -------
@@ -159,7 +160,7 @@ class MultipoleExpansion:
         return cls(
             atcoords=atcoords,
             atcharges=atcharges,
-            dipoles=dipoles,
-            quadrupoles=quadrupoles,
+            atdipoles=atdipoles,
+            atquadrupoles=atquadrupoles,
             representation="spherical",
         )
