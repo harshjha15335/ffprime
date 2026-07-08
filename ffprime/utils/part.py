@@ -10,6 +10,11 @@ from iodata import load_one
 import scipy.constants as spc
 from scipy.integrate import quad
 
+from ffprime.electrostatics.spherical import (
+    dipole_spherical_to_cartesian,
+    quadrupole_spherical_to_cartesian,
+)
+
 meter: float = 1 / spc.value('Bohr radius')
 nanometer: float = 1e-9 * meter
 kjmol: float = 1e3 / spc.value('Avogadro constant') / spc.value('Hartree energy')
@@ -110,24 +115,65 @@ class Partitioning:
 
 
 def compute_cartesian_atomic_moments(pro_model, grid, moldens, localgrids):
+    """Compute per-atom Cartesian charge/dipole/quadrupole moments.
+
+    ``compute_multipole_moments`` returns pure (real) spherical
+    moments per atom, ``pm``, ordered as:
+
+        pm[0:3] -> l=1 moments (Stone order: Q_10, Q_11c, Q_11s)
+        pm[3:8] -> l=2 moments (Q_20, Q_21c, Q_21s, Q_22c, Q_22s),
+                   but *not* in Stone convention -- the m=+-1/+-2
+                   components carry an extra sqrt(3)/2 scale factor,
+                   and the overall sign is flipped relative to the
+                   convention used by
+                   ``ffprime.electrostatics.spherical``.
+
+    We therefore rescale/sign-flip into Stone convention first, then
+    delegate the actual spherical -> Cartesian conversion to the
+    shared, tested utilities ``dipole_spherical_to_cartesian`` and
+    ``quadrupole_spherical_to_cartesian`` instead of re-deriving the
+    formulas by hand. The output ordering/values are unchanged from
+    the previous manual implementation.
+    """
     cartesian_moments = []
     pure_moments = compute_multipole_moments(pro_model, grid, moldens, localgrids)
+    sqrt3 = np.sqrt(3)
+
     for i, pm in enumerate(pure_moments):
-                        # atomic charges
-                        atmom_cart = [pro_model.charges[i]]
+        # atomic charge
+        atmom_cart = [pro_model.charges[i]]
 
-                        # atomic dipole moment
-                        atmom_cart.append(-pm[1])  # x
-                        atmom_cart.append(-pm[2])  # y
-                        atmom_cart.append(-pm[0])  # z
+        # ---- Dipole ----
+        # pm[0:3] are already in Stone order [Q_10, Q_11c, Q_11s].
+        # dipole_spherical_to_cartesian returns [x, y, z] with the
+        # opposite overall sign convention historically stored here,
+        # so negate to preserve prior behavior.
+        dipole_cart = -dipole_spherical_to_cartesian(pm[0:3])
+        atmom_cart.append(dipole_cart[0])  # x
+        atmom_cart.append(dipole_cart[1])  # y
+        atmom_cart.append(dipole_cart[2])  # z
 
-                        # atomic quadrupole moment (this is traceless, unlike what is stored for other schemes)
-                        atmom_cart.append(-(-0.5 * pm[3] + (np.sqrt(3) / 2) * pm[6]))  # xx
-                        atmom_cart.append(-((np.sqrt(3) / 2) * pm[7]))  # xy
-                        atmom_cart.append(-((np.sqrt(3) / 2) * pm[4]))  # xz
-                        atmom_cart.append(-(-0.5 * pm[3] - (np.sqrt(3) / 2) * pm[6]))  # yy
-                        atmom_cart.append(-((np.sqrt(3) / 2) * pm[5]))  # yz
-                        atmom_cart.append(-pm[3])
+        # ---- Quadrupole ----
+        # Convert pm[3:8] into Stone convention: rescale the m=+-1/+-2
+        # terms by sqrt(3)/2 and flip sign to match the sign convention
+        # expected by quadrupole_spherical_to_cartesian.
+        Q20 = -pm[3]
+        Q21c = -(sqrt3 / 2) * pm[4]
+        Q21s = -(sqrt3 / 2) * pm[5]
+        Q22c = -(sqrt3 / 2) * pm[6]
+        Q22s = -(sqrt3 / 2) * pm[7]
+        quad_sph = np.array([Q20, Q21c, Q21s, Q22c, Q22s])
 
-                        cartesian_moments.append(atmom_cart)
+        theta = quadrupole_spherical_to_cartesian(quad_sph)
+
+        # Preserve original flattened ordering: xx, xy, xz, yy, yz, zz
+        atmom_cart.append(theta[0, 0])  # xx
+        atmom_cart.append(theta[0, 1])  # xy
+        atmom_cart.append(theta[0, 2])  # xz
+        atmom_cart.append(theta[1, 1])  # yy
+        atmom_cart.append(theta[1, 2])  # yz
+        atmom_cart.append(theta[2, 2])  # zz
+
+        cartesian_moments.append(atmom_cart)
+
     return np.array(cartesian_moments)
