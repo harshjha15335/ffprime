@@ -96,7 +96,7 @@ class Partitioning:
         result.volume_ratios = volume_ratios
         result.charges = atcharges
         result.atdipoles = atdipoles
-        resut.atquadrupoles = atquads
+        result.atquadrupoles = atquads
         result.c6s = c6s_eff
         result.alpha = a_eff
         result.sigma = sigma

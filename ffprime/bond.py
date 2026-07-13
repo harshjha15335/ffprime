@@ -1,4 +1,4 @@
-from utils.connectivity import parse_gaussian_connectivities
+from ffprime.utils.connectivity import parse_gaussian_connectivities
 from iodata import load_one
 import os       
 import numpy as np
@@ -102,6 +102,6 @@ class Bonded:
             else:
                 bonds_list[idx] = (*bond[:2], k_ij_avg)
         #return bonds_list
-job = Bonded(log_path="bonding/lig.log", fchk_path="bonding/lig.fchk")
+#job = Bonded(log_path="bonding/lig.log", fchk_path="bonding/lig.fchk")
 #job.compute_all_k_ij(job.bonds, job.hess_new)
 #print([b[3] for b in job.bonds])  # Print the force constants for each bond
