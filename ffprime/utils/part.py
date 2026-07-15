@@ -121,23 +121,26 @@ def compute_cartesian_atomic_moments(pro_model, grid, moldens, localgrids):
     moments per atom, ``pm``, ordered as:
 
         pm[0:3] -> l=1 moments (Stone order: Q_10, Q_11c, Q_11s)
-        pm[3:8] -> l=2 moments (Q_20, Q_21c, Q_21s, Q_22c, Q_22s),
-                   but *not* in Stone convention -- the m=+-1/+-2
-                   components carry an extra sqrt(3)/2 scale factor,
-                   and the overall sign is flipped relative to the
-                   convention used by
-                   ``ffprime.electrostatics.spherical``.
+        pm[3:8] -> l=2 moments (Q_20, Q_21c, Q_21s, Q_22c, Q_22s)
 
-    We therefore rescale/sign-flip into Stone convention first, then
-    delegate the actual spherical -> Cartesian conversion to the
-    shared, tested utilities ``dipole_spherical_to_cartesian`` and
-    ``quadrupole_spherical_to_cartesian`` instead of re-deriving the
-    formulas by hand. The output ordering/values are unchanged from
-    the previous manual implementation.
+    ``pm`` is expressed in terms of the *electron* density, whereas
+    Stone's convention (and the physical, nuclear-frame multipole we
+    want to expose) is defined in terms of the *charge* density
+    rho_c = -rho_e. That is the only discrepancy between ``pm`` and a
+    genuine Stone spherical multipole: there is no extra sqrt(3)/2
+    rescaling needed on the m=+-1/+-2 components, because
+    ``compute_multipole_moments`` already returns them with the correct
+    Racah normalization expected by
+    ``ffprime.electrostatics.spherical.quadrupole_spherical_to_cartesian``.
+
+    We therefore only flip the overall sign (electron density -> charge
+    density) before delegating the actual spherical -> Cartesian
+    conversion to the shared, tested utilities
+    ``dipole_spherical_to_cartesian`` and
+    ``quadrupole_spherical_to_cartesian``.
     """
     cartesian_moments = []
     pure_moments = compute_multipole_moments(pro_model, grid, moldens, localgrids)
-    sqrt3 = np.sqrt(3)
 
     for i, pm in enumerate(pure_moments):
         # atomic charge
@@ -145,23 +148,22 @@ def compute_cartesian_atomic_moments(pro_model, grid, moldens, localgrids):
 
         # ---- Dipole ----
         # pm[0:3] are already in Stone order [Q_10, Q_11c, Q_11s].
-        # dipole_spherical_to_cartesian returns [x, y, z] with the
-        # opposite overall sign convention historically stored here,
-        # so negate to preserve prior behavior.
+        # Only the electron-density -> charge-density sign flip is
+        # needed before converting to Cartesian form.
         dipole_cart = -dipole_spherical_to_cartesian(pm[0:3])
         atmom_cart.append(dipole_cart[0])  # x
         atmom_cart.append(dipole_cart[1])  # y
         atmom_cart.append(dipole_cart[2])  # z
 
         # ---- Quadrupole ----
-        # Convert pm[3:8] into Stone convention: rescale the m=+-1/+-2
-        # terms by sqrt(3)/2 and flip sign to match the sign convention
-        # expected by quadrupole_spherical_to_cartesian.
+        # pm[3:8] are already genuine Stone spherical quadrupole
+        # components (Racah-normalized); only the electron-density ->
+        # charge-density sign flip is applied.
         Q20 = -pm[3]
-        Q21c = -(sqrt3 / 2) * pm[4]
-        Q21s = -(sqrt3 / 2) * pm[5]
-        Q22c = -(sqrt3 / 2) * pm[6]
-        Q22s = -(sqrt3 / 2) * pm[7]
+        Q21c = -pm[4]
+        Q21s = -pm[5]
+        Q22c = -pm[6]
+        Q22s = -pm[7]
         quad_sph = np.array([Q20, Q21c, Q21s, Q22c, Q22s])
 
         theta = quadrupole_spherical_to_cartesian(quad_sph)
