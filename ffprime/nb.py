@@ -135,7 +135,7 @@ class Nonbonded:
 
         # fields that go into atffparams
         ff_fields = ["atcharges", "sigma", "epsilon"]
-        ff_extra = ['ref_atvolumes', 'volume_ratios', 'c6s_eff', 'a_eff']
+        ff_extra = ['ref_atvolumes', 'volume_ratios', 'c6s_eff', 'a_eff', 'atdipoles', 'atquadrupoles']
 
         for key, val in results.items():
         # Convert lists → numpy arrays for consistency
@@ -215,6 +215,8 @@ class Nonbonded:
             "atnums": mol.atnums,
             "atcoords": mol.atcoords,
             "atcharges": part.charges,
+            "atdipoles": part.atdipoles,
+            "atquadrupoles": part.atquadrupoles,
             "ref_atvolumes": part.ref_volumes,
             "volume_ratios": part.volume_ratios,
             "c6s_eff": part.c6s,
@@ -237,6 +239,8 @@ class Nonbonded:
             "atnums",
             "atcoords",
             "atcharges",
+            "atdipoles",
+            "atquadrupoles",
             "ref_atvolumes",
             "volume_ratios",
             "c6s_eff",

@@ -89,7 +89,8 @@ class Partitioning:
                 sigma[i]=((5.08 * a_eff[i] ** (1.0 / 7.0))/(2 ** (1.0 / 6.0)))/nanometer
                 epsilon[i]=(c6s_eff[i]/(2*(5.08 * a_eff[i] ** (1.0 / 7.0))**6))/kjmol
 
-
+        else:
+            raise ValueError(f"Given scheme={scheme} not supported!")
 
         #save the attributes in part object
 
@@ -99,19 +100,16 @@ class Partitioning:
         result.ref_volumes = ref_volumes
         result.volume_ratios = volume_ratios
         result.charges = atcharges
+        result.atdipoles = atdipoles
+        result.atquadrupoles = atquads
         result.c6s = c6s_eff
         result.alpha = a_eff
         result.sigma = sigma
         result.epsilon = epsilon
-
-        # guarda el objeto "part" real por si lo necesitas
         result.part = part
 
         self.part = result
         return result
-
-        #else:
-        #    raise ValueError(f"Given scheme={scheme} not supported!")
 
 
 def compute_cartesian_atomic_moments(pro_model, grid, moldens, localgrids):
